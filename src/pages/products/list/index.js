@@ -1,36 +1,69 @@
 import ProductForm from "../../../components/product-form";
+import SortableTable from '../../../components/sortable-table';
+import header from '../../dashboard/bestsellers-header';
 
 export default class Page {
   element;
   subElements = {};
   components = {};
 
+  constructor() {
+  }
+
   async render() {
     const element = document.createElement('div');
 
-    element.innerHTML = `
-      <div>
-        <h1>List page</h1>
-      </div>`;
+    element.innerHTML = this.pageTemplate;
 
     this.element = element.firstElementChild;
+    this.subElements = this.getSubElements(element);
 
     this.initComponents();
-    await this.renderComponents();
+    this.renderComponents();
+    this.initEventListeners();
 
     return this.element;
   }
 
-  initComponents() {
-    const productId = '101-planset-lenovo-yt3-x90l-64-gb-3g-lte-cernyj';
+  getSubElements(element) {
+    const subElements = {};
 
-    this.components.productFrom = new ProductForm(productId);
+    for (const subElement of element.querySelectorAll('[data-element]')) {
+      subElements[subElement.dataset.element] = subElement;
+    }
+
+    return subElements;
   }
 
-  async renderComponents() {
-    const element = await this.components.productFrom.render();
+  get pageTemplate() {
+    return `
+      <div class="products-list">
+        <div class="content__top-panel">
+          <h1 class="page-title">Товары</h1>
+          <a href="/products/add" class="button-primary">Добавить товар</a>
+        </div>
+        <div data-element="productsContainer" class="products-list__container"></div>
+      </div>
+    `;
+  }
 
-    this.element.append(element);
+  initComponents() {
+    this.components.productsContainer = new SortableTable(header, {
+      sorted : 'title',
+      url: `api/rest/products`
+    });
+  }
+
+  renderComponents() {
+    Object.keys(this.components).forEach(component => {
+      const { element } = this.components[component];
+      const root = this.subElements[component];
+      root.append(element);
+    });
+  }
+
+  initEventListeners() {
+
   }
 
   destroy() {
